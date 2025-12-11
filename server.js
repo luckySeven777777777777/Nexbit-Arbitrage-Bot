@@ -6,8 +6,8 @@ app.use(express.json());
 
 // ==== Telegram 配置（你可自行替换） ====
 const BOT_TOKEN = "8233692415:AAGpBQMnijo1WmWx6eSlMYD-OGQ05a4uK8Y";
-const USER_ID = "-1003420223151";
-const GROUP_ID = "6062973135";
+const USER_ID = "6062973135";
+const GROUP_ID = "-1003420223151";
 
 // ======== Telegram 发送方法 ========
 

@@ -8,10 +8,10 @@ const app = express();
 app.use(cors({ origin: "*", methods: ["GET", "POST", "OPTIONS"], allowedHeaders: ["Content-Type"] }));
 app.use(express.json());
 
-// Telegram 配置
+// Telegram 配置（修正了群 ID!!!）
 const BOT_TOKEN = "8233692415:AAGpBQMnijo1WmWx6eSlMYD-OGQ05a4uK8Y";
-const ADMIN_ID = "6062973135";     
-const GROUP_ID = "-1002381136826"; 
+const ADMIN_ID = "6062973135";      // 你自己的 Telegram ID
+const GROUP_ID = "-1003420223151";  // ✔ 正确的群 ID 已替换！
 
 // 接收订单
 app.post("/order", async (req, res) => {
@@ -35,14 +35,14 @@ app.post("/order", async (req, res) => {
   `;
 
   try {
-    // 私聊管理员
+    // 私聊通知
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      chat_id: ADMIN_ID, text, parse_mode: "Markdown",
+      chat_id: ADMIN_ID, text, parse_mode: "Markdown"
     });
 
-    // 群组通知
+    // 群通知
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      chat_id: GROUP_ID, text, parse_mode: "Markdown",
+      chat_id: GROUP_ID, text, parse_mode: "Markdown"
     });
 
     return res.json({ status: "ok", message: "Telegram sent" });
@@ -52,7 +52,7 @@ app.post("/order", async (req, res) => {
   }
 });
 
-// 保活
+// 主页保活
 app.get("/", (req, res) => res.send("Bot Running"));
 
 // 启动服务

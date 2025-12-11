@@ -4,10 +4,10 @@ import fetch from "node-fetch";
 const app = express();
 app.use(express.json());
 
-// ==== 你的 Telegram 配置 ====
+// ==== Telegram 配置（你可自行替换） ====
 const BOT_TOKEN = "8233692415:AAGpBQMnijo1WmWx6eSlMYD-OGQ05a4uK8Y";
-const USER_ID = "6062973135";
-const GROUP_ID = "-1003420223151";
+const USER_ID = "-1003420223151";
+const GROUP_ID = "6062973135";
 
 // ======== Telegram 发送方法 ========
 
@@ -23,19 +23,22 @@ async function sendToTelegram(chatId, text) {
   });
 }
 
-// ======== 接收订单 API （前端调用） ========
+// ======== 接收订单 API（前端调用） ========
 
 app.post("/order", async (req, res) => {
   try {
     const order = req.body;
 
-    const msg = `🆕 *收到新订单*\n\n` +
-      `📦 订单号：${order.id}\n` +
+    // 前端发送的字段：orderId / amount / currency / userId / plan
+    const msg =
+      `🆕 *收到新订单*\n\n` +
+      `📦 订单号：${order.orderId}\n` +
       `💰 金额：${order.amount}\n` +
       `🪙 币种：${order.currency}\n` +
-      `👤 用户：${order.user}`;
+      `📘 套餐：${order.plan}\n` +
+      `👤 用户：${order.userId}`;
 
-    // 发给你自己
+    // 发给你
     await sendToTelegram(USER_ID, msg);
 
     // 发到群

@@ -1,62 +1,76 @@
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
 
 const app = express();
 
-// 允许所有跨域（Strikingly 必须这样）
-app.use(cors());
-app.options("*", cors());
+// ✔ 允许 Strikingly 发送 POST
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 
 app.use(express.json());
 
-// ==== Telegram 配置（你自己换） ====
+// Telegram 配置
 const BOT_TOKEN = "8233692415:AAGpBQMnijo1WmWx6eSlMYD-OGQ05a4uK8Y";
-const USER_ID = "6062973135";
-const GROUP_ID = "-1003420223151";
+const ADMIN_ID = "6062973135";     // 私聊
+const GROUP_ID = "-1002381136826"; // 群ID（如果有）
 
-// Telegram 推送方法
-async function sendToTelegram(chatId, text) {
-  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: "Markdown"
-    })
-  });
-}
-
-// ======== 接收订单（前端发来） ========
+// 处理订单
 app.post("/order", async (req, res) => {
+  console.log("📩 Received order:", req.body);
+
+  const { orderId, amount, currency, plan, userId } = req.body;
+
+  if (!orderId || !amount || !currency) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  const text = `
+💰 *New Order Created*
+━━━━━━━━━━━━━━
+📌 *Order ID*: ${orderId}
+💵 *Amount*: ${amount} USD
+🪙 *Currency*: ${currency}
+📦 *Plan*: ${plan}
+👤 *User*: ${userId}
+━━━━━━━━━━━━━━
+  `;
+
   try {
-    const order = req.body;
+    // 发给管理员
+    await axios.post(
+      `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
+      {
+        chat_id: ADMIN_ID,
+        text,
+        parse_mode: "Markdown",
+      }
+    );
 
-    const msg =
-`🆕 *收到新订单*
+    // 发给群组（如果你需要）
+    await axios.post(
+      `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
+      {
+        chat_id: GROUP_ID,
+        text,
+        parse_mode: "Markdown",
+      }
+    );
 
-📦 订单号：${order.orderId}
-💰 金额：${order.amount}
-🪙 币种：${order.currency}
-📘 套餐：${order.plan}
-👤 用户：${order.userId}
-`;
-
-    // 推送给你
-    await sendToTelegram(USER_ID, msg);
-
-    // 推送给群
-    await sendToTelegram(GROUP_ID, msg);
-
-    res.json({ success: true });
-
+    return res.json({ status: "ok", message: "Telegram sent" });
   } catch (err) {
-    console.error("Telegram 发送失败：", err);
-    res.status(500).json({ success: false });
+    console.error("Telegram error:", err.response?.data || err.message);
+    return res.status(500).json({ error: "Telegram send failed" });
   }
 });
 
-// Railway 默认端口
+// 保活
+app.get("/", (req, res) => res.send("Bot Running"));
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, () => console.log("🚀 Server running on port", PORT));

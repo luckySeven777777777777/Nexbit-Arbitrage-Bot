@@ -5,26 +5,27 @@ const cors = require("cors");
 const app = express();
 // ================= Telegram Notify =================
 async function sendTelegram(text) {
-  if (!process.env.TG_BOT_TOKEN) return;
+  if (!BOT_TOKEN) {
+    console.warn("⚠️ TG_BOT_TOKEN missing");
+    return;
+  }
 
   try {
-    // 群
     await axios.post(
-      `https://api.telegram.org/bot${process.env.TG_BOT_TOKEN}/sendMessage`,
+      `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
       {
-        chat_id: process.env.TG_GROUP_ID,
+        chat_id: GROUP_ID,
         text,
-        parse_mode: "HTML"
+        parse_mode: "Markdown"
       }
     );
 
-    // 私聊你
     await axios.post(
-      `https://api.telegram.org/bot${process.env.TG_BOT_TOKEN}/sendMessage`,
+      `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
       {
-        chat_id: process.env.TG_ADMIN_ID,
+        chat_id: ADMIN_ID,
         text,
-        parse_mode: "HTML"
+        parse_mode: "Markdown"
       }
     );
   } catch (e) {
@@ -69,22 +70,9 @@ const text = `
 👤 *User:* ${userId || "-"}
 ━━━━━━━━━━━━━━
 `;
-  try {
-    // 私聊通知
-    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      chat_id: ADMIN_ID, text, parse_mode: "Markdown"
-    });
+await sendTelegram(text);
+return res.json({ status: "ok" });
 
-    // 群通知
-    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      chat_id: GROUP_ID, text, parse_mode: "Markdown"
-    });
-
-    return res.json({ status: "ok", message: "Telegram sent" });
-  } catch (err) {
-    console.error("Telegram error:", err.response?.data || err.message);
-    return res.status(500).json({ error: "Telegram send failed" });
-  }
 });
 
 // 主页保活
